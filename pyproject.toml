@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gvbpp"
+version = "0.1.0"
+description = "GVB Perfect Pairing for PySCF: a standalone GVB-PP solver running entirely within PySCF"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.8"
+authors = [
+    {name = "John A. Keith", email = "jakeith@pitt.edu"},
+]
+dependencies = [
+    "numpy",
+    "pyscf>=2.0",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Chemistry",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7.0"]
+
+[project.urls]
+Homepage = "https://github.com/keithgroup/gvbpp"
+Repository = "https://github.com/keithgroup/gvbpp"
+Issues = "https://github.com/keithgroup/gvbpp/issues"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
