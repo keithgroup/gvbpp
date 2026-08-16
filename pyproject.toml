@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gvbpp"
-version = "0.1.0"
+version = "0.3.1"
 description = "GVB Perfect Pairing for PySCF: a standalone GVB-PP solver running entirely within PySCF"
 readme = "README.md"
 license = {text = "Apache-2.0"}

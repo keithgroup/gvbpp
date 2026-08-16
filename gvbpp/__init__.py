@@ -14,7 +14,8 @@ Reference:
 """
 
 from gvbpp.solver import GVBPPSolver
+from gvbpp.pairing import pair_guess
 from gvbpp.gvbpp import GVBPP, gvb_pp
 
-__version__ = "0.1.0"
-__all__ = ["GVBPPSolver", "GVBPP", "gvb_pp"]
+__version__ = "0.3.1"
+__all__ = ["GVBPPSolver", "GVBPP", "gvb_pp", "pair_guess"]
