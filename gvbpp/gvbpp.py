@@ -77,7 +77,10 @@ class GVBPP:
     occupations : ndarray (2 * n_pairs,)
         Natural orbital occupation numbers, interleaved to match mo_coeff.
     overlaps : ndarray (n_pairs,)
-        GVB orbital overlap S_ab = (n_bond - n_corr) / 2 for each pair.
+        GVB orbital overlap for each pair,
+        S_ab = (1 - r) / (1 + r) with r = sqrt(n_corr / n_bond).
+        Note this is NOT (n_bond - n_corr) / 2; see the comment at the
+        point of computation.
     ci_coeffs : list of (float, float)
         (sigma_a, sigma_b) CI coefficients for each pair.
     converged : bool

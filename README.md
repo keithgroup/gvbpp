@@ -15,7 +15,9 @@ Unlike RHF, GVB-PP dissociates bonds correctly, because it carries the antibondi
 
 The payoff is interpretive as much as numerical. Each pair comes with an overlap
 
-$$S_{ab} = \frac{n_\text{bond} - n_\text{corr}}{2}$$
+$$S_{ab} = \frac{1-r}{1+r}, \qquad r = \sqrt{n_\text{corr}/n_\text{bond}}$$
+
+The perfect-pairing function is $\cos^2\theta\,|bb\rangle - \sin^2\theta\,|cc\rangle$, so the CI *coefficients* go as $\cos^2$ and $\sin^2$, not $\cos$ and $\sin$. Writing $S_{ab}$ as $(n_\text{bond}-n_\text{corr})/2$ confuses the two: it is correct at both limits and too large in between (0.976 rather than 0.803 for H₂). That was a real bug here through v0.3.0.
 
 that behaves like a continuous bond order: near 1 for an ordinary covalent bond, falling toward 0 as the bond breaks or becomes strongly correlated.
 
