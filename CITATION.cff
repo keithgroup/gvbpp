@@ -17,7 +17,7 @@ message: >-
 title: "gvbpp: GVB Perfect Pairing for PySCF"
 type: software
 version: 0.3.1
-date-released: 2026-08-16   # TODO: match the date of the v0.3.1 release tag
+date-released: 2026-09-01   
 license: Apache-2.0
 repository-code: "https://github.com/keithgroup/gvbpp"
 url: "https://github.com/keithgroup/gvbpp"
@@ -27,16 +27,16 @@ authors:
     given-names: "John A."
     email: jakeith@pitt.edu
     affiliation: "Department of Chemical and Petroleum Engineering, University of Pittsburgh"
-    # orcid: "https://orcid.org/0000-0000-0000-0000"   # TODO
+    orcid: "https://orcid.org/0000-0002-6583-6322"
 
 abstract: >-
   A standalone Generalized Valence Bond Perfect Pairing (GVB-PP) solver that
-  runs entirely within PySCF. Each electron pair is correlated with a bonding
-  and a correlating natural orbital, so bonds dissociate correctly without the
-  combinatorial cost of a full CASSCF. Every pair carries a Coulson-Fischer
-  overlap that behaves like a continuous bond order, which is what makes the
-  method interpretive as well as numerical. Companion code for the ACS In Focus
-  primer on the GVB description of chemical bonding.
+  runs within PySCF and was generated with heavy lifting using Claude.ai. 
+  Each electron pair is correlated with a bonding and a correlating natural orbital, 
+  so bonds dissociate correctly without the combinatorial cost of a full CASSCF. 
+  Every pair carries a Coulson-Fischer overlap that behaves like a continuous bond order, 
+  which is what makes the method interpretive as well as numerical. This is meant as a 
+  companion code for a forthcoming ACS In Focus primer on the GVB description of chemical bonding.
 
 keywords:
   - quantum chemistry
