@@ -1,0 +1,117 @@
+# CITATION.cff -- GitHub reads this and puts a "Cite this repository" button
+# on the repository page. Format reference: https://citation-file-format.github.io
+#
+# THREE THINGS TO FILL IN BEFORE COMMITTING, all marked TODO below:
+#   1. ORCID iDs, if you want them shown (optional, but they disambiguate you
+#      from every other J. Keith in the literature).
+#   2. date-released, which should match the date you publish the v0.3.1 tag.
+#   3. The primer's year, publisher DOI and ISBN, once ACS assigns them.
+#
+# Once the primer is published, uncomment the preferred-citation block at the
+# bottom. That tells citation managers "cite the book, not the code", which is
+# usually what you want for a companion package.
+
+cff-version: 1.2.0
+message: >-
+  If you use this software, please cite it using the metadata below.
+title: "gvbpp: GVB Perfect Pairing for PySCF"
+type: software
+version: 0.3.1
+date-released: 2026-08-16   # TODO: match the date of the v0.3.1 release tag
+license: Apache-2.0
+repository-code: "https://github.com/keithgroup/gvbpp"
+url: "https://github.com/keithgroup/gvbpp"
+
+authors:
+  - family-names: Keith
+    given-names: "John A."
+    email: jakeith@pitt.edu
+    affiliation: "Department of Chemical and Petroleum Engineering, University of Pittsburgh"
+    # orcid: "https://orcid.org/0000-0000-0000-0000"   # TODO
+
+abstract: >-
+  A standalone Generalized Valence Bond Perfect Pairing (GVB-PP) solver that
+  runs entirely within PySCF. Each electron pair is correlated with a bonding
+  and a correlating natural orbital, so bonds dissociate correctly without the
+  combinatorial cost of a full CASSCF. Every pair carries a Coulson-Fischer
+  overlap that behaves like a continuous bond order, which is what makes the
+  method interpretive as well as numerical. Companion code for the ACS In Focus
+  primer on the GVB description of chemical bonding.
+
+keywords:
+  - quantum chemistry
+  - electronic structure
+  - generalized valence bond
+  - perfect pairing
+  - valence bond theory
+  - chemical bonding
+  - PySCF
+
+references:
+  # The theory the package implements.
+  - type: generic
+    title: >-
+      The Self-Consistent Field Equations for Generalized Valence Bond and
+      Open-Shell Hartree-Fock Wave Functions
+    authors:
+      - family-names: Bobrowicz
+        given-names: "Frank W."
+      - family-names: Goddard
+        given-names: "William A."
+        name-suffix: III
+    collection-title: "Methods of Electronic Structure Theory"
+    editors:
+      - family-names: Schaefer
+        given-names: "Henry F."
+        name-suffix: III
+    publisher:
+      name: "Plenum Press"
+      city: "New York"
+    year: 1977
+    start: 79
+    end: 127
+
+  # The book this package accompanies.
+  - type: book
+    title: "The GVB Description of Chemical Bonding"
+    authors:
+      - family-names: Keith
+        given-names: "John A."
+        affiliation: "University of Pittsburgh"
+      - family-names: Carter
+        given-names: "Emily A."
+        affiliation: "Princeton University"
+      - family-names: Goddard
+        given-names: "William A."
+        name-suffix: III
+        affiliation: "California Institute of Technology"
+    collection-title: "ACS In Focus"
+    publisher:
+      name: "American Chemical Society"
+      city: "Washington, DC"
+    year: 2026        # TODO: confirm with ACS
+    # doi: "10.1021/acsinfocus.XXXXXXX"   # TODO: add once assigned
+    # isbn: "978-0-8412-XXXX-X"           # TODO: add once assigned
+
+# --- Uncomment once the primer is published, and fill in the DOI ---------
+#
+# preferred-citation:
+#   type: book
+#   title: "The GVB Description of Chemical Bonding"
+#   authors:
+#     - family-names: Keith
+#       given-names: "John A."
+#       affiliation: "University of Pittsburgh"
+#     - family-names: Carter
+#       given-names: "Emily A."
+#       affiliation: "Princeton University"
+#     - family-names: Goddard
+#       given-names: "William A."
+#       name-suffix: III
+#       affiliation: "California Institute of Technology"
+#   collection-title: "ACS In Focus"
+#   publisher:
+#     name: "American Chemical Society"
+#     city: "Washington, DC"
+#   year: 2026
+#   doi: "10.1021/acsinfocus.XXXXXXX"
