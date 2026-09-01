@@ -87,6 +87,24 @@ res = gvb_pp(mol, n_pairs=4)   # 2 O-H bonds + 2 lone pairs
 
 The two O–H bond pairs come out equivalent, as do the two lone pairs — which is a useful check that the pairing worked.
 
+### An open-shell molecule
+
+```python
+from pyscf import gto
+from gvbpp import gvb_pp
+
+# triplet methylene: 2 C-H bond pairs plus two singly occupied orbitals
+mol = gto.M(atom='C 0 0 0; H 0.9969 0 0.4290; H -0.9969 0 0.4290',
+            basis='cc-pvdz', spin=2)
+res = gvb_pp(mol, n_pairs=2)
+
+res.overlaps            # array([0.849, 0.849])
+res.get_open_orbitals() # the two singly occupied orbitals, (nao, 2)
+```
+
+Pass `spin=2S`; the driver switches to ROHF on its own. `n_pairs` counts only
+the pairs you want correlated, not the open shells.
+
 ### Custom SCF backend
 
 ```python
@@ -171,9 +189,9 @@ pytest tests/ -v
 ## Limitations
 
 - **Perfect pairing only.** No inter-pair excitations, so roughly a third of the CASSCF correlation energy in the same active space is missing by design. GVB-PP is a model of bonding, not a route to chemical accuracy.
-- **Closed-shell references.** Open-shell and spin-coupled GVB (the full GVB-CI of Goddard's original work) are not implemented.
-- **Restricted to singlet-coupled pairs.**
-- Cost is dominated by the CASSCF orbital optimization, so it grows quickly with basis size.
+- **Every correlated pair is singlet coupled.** That is what perfect pairing means. Spin-coupled GVB, in which the spin function is optimized rather than fixed as a product of singlet pairs (the full GVB-CI of Goddard's original work), is not implemented.
+- **Open-shell molecules are supported, with a caveat.** Set `spin=` on the molecule and the driver uses an ROHF reference automatically, carries the singly occupied orbitals high-spin alongside the pairs, and correlates the doubly occupied ones. CH, CH₂ and CH₃ all run this way. What is *not* done is coupling those open shells to anything other than high spin.
+- Cost is dominated by the CASSCF orbital optimization, so it grows quickly with basis size. Expect a few seconds for a diatomic in cc-pVDZ, half a minute for water in cc-pVDZ, and about a minute for water in def2-TZVPP.
 
 ## Citation
 
