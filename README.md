@@ -162,7 +162,7 @@ Which pairs you correlate is a modeling choice, and the obvious default is wrong
 
 Orbital optimization under the perfect-pairing restriction is not convex. Different starting guesses reach different stationary points — on water they differ by about 6 kcal/mol — and neither systematic guess wins in general. A guess sitting near a bifurcation can even land in different basins on repeated runs of identical input, because threaded BLAS reductions are not bitwise reproducible.
 
-The default `guess='auto'` therefore multi-starts: localized, canonical, and `n_trials` seeded orthogonal perturbations, keeping the lowest energy. This makes the reported minimum robust and reproducible rather than lucky. Pass `n_trials=0` for a faster, less thorough search, or an explicit `guess=` to study the dependence itself.
+The default `guess='auto'` therefore multi-starts: localized, canonical, exchange, and `n_trials` seeded orthogonal perturbations, keeping the lowest energy. The `exchange` guess builds each correlating orbital as the dominant eigenvector of the bonding orbital's exchange operator in the full virtual space; it is the one that finds the antibonding partner when the lowest virtuals are diffuse (H₂ in a large uncontracted basis: −1.15216 instead of −1.14194 Eh). This makes the reported minimum robust and reproducible rather than lucky. Pass `n_trials=0` for a faster, less thorough search, or an explicit `guess=` to study the dependence itself.
 
 ## Validation
 

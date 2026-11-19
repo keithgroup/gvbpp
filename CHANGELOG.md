@@ -1,5 +1,54 @@
 # Changelog
 
+## 0.3.3 (2026-11-16)
+
+### Fixed
+
+- **More than about eight pairs exhausted memory.** The solver expanded the
+  PP CI vector to PySCF's determinant format, C(2n, n)^2 coefficients: 1.7e8
+  for eight pairs, 3.4e10 (270 GB) for ten. Propane with ten pairs was killed
+  by the operating system. The CI vector now stays in the PP basis (2^n
+  coefficients) throughout; `mc.ci` is that vector.
+
+### Changed
+
+- `make_rdm1`, `make_rdm1s` and `make_rdm12` are built analytically from the
+  PP vector (a PP wave function has only Coulomb-, exchange- and
+  pair-transfer-type 2-RDM elements). They agree with PySCF's
+  determinant-space matrices to 1e-16, open shells included.
+- The PP Hamiltonian is assembled from the J and K matrices in vectorized
+  form instead of a Python double loop over configurations; beyond eleven
+  pairs it is solved as a sparse eigenproblem.
+- `approx_kernel` is provided, so PySCF's CASSCF micro-iterations no longer
+  call determinant-space routines. `absorb_h1e`, `contract_2e` and
+  `gen_linkstr` were removed from the solver. `_pp_to_fci` / `_fci_to_pp`
+  remain as utilities for small cases.
+- Energies and occupations are unchanged (all earlier regression tests pass).
+
+## 0.3.2 (2026-11-12)
+
+### Fixed
+
+- **The default guess could miss the antibonding correlating orbital in
+  diffuse basis sets.** Both systematic guesses chose the correlating orbital
+  from the lowest canonical virtuals. With diffuse functions those are
+  Rydberg-like, and the optimization then converged to a higher stationary
+  point with an "in-out" correlating orbital. H2 at 1.4 a0 in an uncontracted
+  even-tempered spd basis gave -1.14194 Eh (as does PySCF's default
+  CASSCF(2,2)); the sigma_g/sigma_u pair lies at -1.15216 Eh, 6.4 kcal/mol
+  lower. cc-pVDZ results are unaffected.
+
+### Added
+
+- `guess='exchange'` (also `pair_guess(..., method='exchange')`): the
+  correlating orbital of each pair is constructed as the dominant eigenvector
+  of the bonding orbital's exchange operator in the full virtual space, i.e.
+  the virtual that maximizes K_iv exactly. `guess='auto'` now tries it as a
+  third systematic start, so the default costs one more optimization and can
+  only return the same or a lower energy than before.
+- Regression tests: H2 in a diffuse basis (energy, n_corr, ungerade
+  correlating orbital, `auto` selects it) and F2.
+
 ## 0.3.1 (2026-08-16)
 
 ### Fixed
