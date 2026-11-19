@@ -15,7 +15,7 @@ i.e. the bonding and correlating natural orbitals of each pair are adjacent.
 Getting this wrong is not a small error -- it silently places electron pairs
 in the wrong orbitals and produces energies far above Hartree-Fock.
 
-Two guesses are provided:
+Three guesses are provided:
 
 ``canonical``
     Pair the HOMO with the LUMO, HOMO-1 with LUMO+1, and so on. Cheap, and
@@ -41,6 +41,21 @@ Two guesses are provided:
     silently correlates a lone pair instead of the bond. Over the valence
     window, the sigma/sigma* pair wins on K by a factor of three and is
     selected correctly.
+
+``exchange``
+    Like ``localized`` for the occupied side, but the correlating orbital is
+    *constructed* instead of being picked from the low-lying canonical
+    virtuals: for bonding orbital i it is the dominant eigenvector of the
+    exchange operator K_i, (a|K_i|b) = (ia|ib), in the full virtual space,
+    i.e. the virtual orbital that maximizes K_iv exactly.
+
+    The other two guesses can only choose among the lowest virtuals. In a
+    basis with diffuse functions those are Rydberg-like and none of them
+    resembles the antibonding partner; the optimization then converges to a
+    higher stationary point with an "in-out" correlating orbital. H2 at
+    1.4 a0 in a large uncontracted basis gives -1.14194 Eh that way (and so
+    does PySCF's default CASSCF(2,2)), against -1.15216 Eh for the proper
+    sigma_g/sigma_u pair, 6.4 kcal/mol lower.
 """
 
 import numpy as np
@@ -135,7 +150,7 @@ def pair_guess(mf, n_pairs, method='localized', window=None):
         A converged mean-field calculation.
     n_pairs : int
         Number of GVB pairs to correlate.
-    method : {'localized', 'canonical'}
+    method : {'localized', 'canonical', 'exchange'}
         Pairing strategy. See the module docstring.
     window : int or None
         How many occupied and virtual orbitals to search when choosing
@@ -243,10 +258,67 @@ def pair_guess(mf, n_pairs, method='localized', window=None):
             'n_open': n_open,
         }
 
+    elif method == 'exchange':
+        from pyscf import scf
+        n_frozen = n_core_orbitals(mol)
+        if window is None:
+            n_search_o = max(n_pairs, n_occ - n_frozen)
+        else:
+            n_search_o = max(n_pairs, int(window))
+        n_search_o = min(n_search_o, n_occ)
+        o_lo = n_occ - n_search_o
+        occ_idx = [docc[i] for i in range(o_lo, n_occ)]
+        occ_win = _boys(mol, mo[:, occ_idx])
+
+        # Exchange operator of every candidate bonding orbital, in one batch.
+        dms = np.array([np.outer(occ_win[:, i], occ_win[:, i])
+                        for i in range(n_search_o)])
+        k_ao = np.asarray(scf.hf.get_jk(mol, dms, hermi=1)[1])
+        k_ao = k_ao.reshape(n_search_o, mo.shape[0], mo.shape[0])
+
+        c_vir = mo[:, virt]                    # shrinks as partners are taken
+        assignment, corr_cols, k_pair = [], [], []
+        free = list(range(n_search_o))
+        for _ in range(n_pairs):
+            best = None
+            for i in free:
+                w, u = np.linalg.eigh(c_vir.T @ k_ao[i] @ c_vir)
+                if best is None or w[-1] > best[0]:
+                    best = (w[-1], i, u[:, -1])
+            k_max, i, vec = best
+            free.remove(i)
+            # Rotate the virtual space so that `vec` is its first column,
+            # take that column as the correlating orbital, keep the rest.
+            q, _ = np.linalg.qr(np.column_stack([vec, np.eye(len(vec))]))
+            q = q[:, :len(vec)]
+            corr_cols.append(c_vir @ q[:, 0])
+            c_vir = c_vir @ q[:, 1:]
+            assignment.append((i, len(corr_cols) - 1))
+            k_pair.append(float(k_max))
+
+        sel_o = {i for i, _ in assignment}
+        core = ([mo[:, docc[i]] for i in range(o_lo)]
+                + [occ_win[:, i] for i in range(n_search_o)
+                   if i not in sel_o])
+        outer = [c_vir[:, v] for v in range(c_vir.shape[1])]
+        active = []
+        for i, v in assignment:
+            active += [occ_win[:, i], corr_cols[v]]
+
+        info = {
+            'method': 'exchange',
+            'exchange': None,
+            'assignment': assignment,
+            'pair_exchange': k_pair,
+            'window': (n_search_o, len(virt)),
+            'n_frozen_core': n_frozen,
+            'n_open': n_open,
+        }
+
     else:
         raise ValueError(
             f"unknown pairing method {method!r}; expected "
-            f"'localized' or 'canonical'"
+            f"'localized', 'canonical' or 'exchange'"
         )
 
     return np.array(core + active + open_cols + outer).T, info

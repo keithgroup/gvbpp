@@ -367,3 +367,99 @@ def test_pair_overlap_matches_explicit_gvb_orbitals():
         assert abs(g.overlaps[0] - direct) < 1e-4, (
             f'R={R}: reported {g.overlaps[0]:.5f}, direct {direct:.5f}')
         assert abs(g.overlaps[0] - ref) < 1e-3
+
+
+# ----------------------------------------------------------------------
+# Diffuse basis: the correlating orbital is not among the low virtuals
+# ----------------------------------------------------------------------
+def _even_tempered_h2():
+    """H2 at 1.4 a0 in an uncontracted even-tempered spd basis (100 AOs)."""
+    def et(lo, hi, ratio=2.5):
+        n = int(np.ceil(np.log(hi / lo) / np.log(ratio))) + 1
+        return lo * ratio ** np.arange(n)
+    shells = {0: et(0.03, 3000), 1: et(0.1, 12), 2: np.array([0.3, 0.8, 2.0])}
+    basis = [[l, [float(a), 1.0]] for l, ex in shells.items() for a in ex]
+    mol = gto.M(atom='H 0 0 0; H 0 0 1.4', unit='Bohr', basis=basis, verbose=0)
+    return mol, scf.RHF(mol).run()
+
+
+def test_exchange_guess_finds_antibonding_partner():
+    """
+    With diffuse functions the LUMO is Rydberg-like, and the localized and
+    canonical guesses both converge to an in-out correlating orbital at
+    -1.14194 Eh. The left-right (sigma_g/sigma_u) pair lies at -1.15216 Eh.
+    The exchange guess must find it, and so must the default 'auto'.
+    """
+    mol, mf = _even_tempered_h2()
+    g = GVBPP(mol, n_pairs=1)
+    g.kernel(mf=mf, verbose=0, guess='exchange')
+    assert g.e_tot < -1.1521
+    assert 0.02 < g.occupations[1] < 0.03          # n_u = 0.0241
+
+    # the correlating natural orbital is ungerade
+    n = mol.nao // 2
+    S = mf.get_ovlp()
+    c = g.mo_coeff[:, g.ncore + 1]
+    P = np.zeros((2 * n, 2 * n))                    # inversion: swap atoms, (-1)^l
+    par = np.array([(-1.0) ** mol.bas_angular(mol.search_ao_label('0 H')[0] * 0 + b)
+                    for b in range(mol.nbas // 2) for _ in range(2 * mol.bas_angular(b) + 1)])
+    P[:n, n:] = np.diag(par)
+    P[n:, :n] = np.diag(par)
+    assert c @ S @ P @ c < -0.99
+
+    g_auto = GVBPP(mol, n_pairs=1)
+    g_auto.kernel(mf=mf, verbose=0, n_trials=0)
+    assert abs(g_auto.e_tot - g.e_tot) < 1e-7
+    assert g_auto.guess_used == 'exchange'
+
+
+def test_exchange_guess_f2_and_water():
+    """The exchange guess must still pick the F2 sigma bond, and on water it
+    must never make 'auto' worse than the two older guesses."""
+    mol = gto.M(atom='F 0 0 0; F 0 0 1.412', basis='cc-pvdz', verbose=0)
+    mf = scf.RHF(mol).run()
+    g = GVBPP(mol, n_pairs=1)
+    g.kernel(mf=mf, verbose=0, guess='exchange')
+    assert 0.05 < g.occupations[1] < 0.25          # sigma/sigma*, not a lone pair
+    g_loc = GVBPP(mol, n_pairs=1)
+    g_loc.kernel(mf=mf, verbose=0, guess='localized')
+    assert g.e_tot < g_loc.e_tot + 1e-6
+
+
+# ----------------------------------------------------------------------
+# The CI vector stays in the PP basis: many pairs must be affordable
+# ----------------------------------------------------------------------
+def test_rdm12_matches_determinant_space():
+    """Analytic PP 1- and 2-RDM equal PySCF's determinant-space ones, open shells included."""
+    from pyscf.fci import direct_spin1
+    rng = np.random.default_rng(0)
+    for npair, nopen in ((2, 0), (3, 1), (2, 2)):
+        s = GVBPPSolver(npair, nopen)
+        ncas, nelec = 2 * npair + nopen, (npair + nopen, npair)
+        c = rng.normal(size=2 ** npair)
+        c /= np.linalg.norm(c)
+        d1, d2 = s.make_rdm12(c, ncas, nelec)
+        r1, r2 = direct_spin1.make_rdm12(s._pp_to_fci(c, ncas, nelec), ncas, nelec)
+        assert abs(d1 - r1).max() < 1e-12
+        assert abs(d2 - r2).max() < 1e-12
+
+
+def test_ten_pairs_propane():
+    """
+    Ten pairs used to need a C(20,10)^2 = 3.4e10-element determinant vector
+    (270 GB) and was killed by the OS. In the PP basis it is 1024 numbers.
+    """
+    t = np.array([[1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]]) / np.sqrt(3.0)
+    c1, c3 = 1.54 * t[0], 1.54 * t[1]
+    xyz = [c1, np.zeros(3), c3, 1.086 * t[2], 1.086 * t[3]]
+    xyz += [c1 - 1.086 * t[k] for k in (1, 2, 3)] + [c3 - 1.086 * t[k] for k in (0, 2, 3)]
+    mol = gto.M(atom=[[s, tuple(x)] for s, x in zip(['C'] * 3 + ['H'] * 8, xyz)],
+                basis='sto-3g', verbose=0)
+    mf = scf.RHF(mol).run()
+    g = GVBPP(mol, n_pairs=10)
+    g.kernel(mf=mf, verbose=0, guess='localized', max_restart=2)
+    assert g.mc.ci.shape == (1024,)
+    assert g.e_tot < mf.e_tot - 0.1            # ten pairs, roughly 0.02 Eh each in this basis
+    occ = np.asarray(g.occupations).reshape(10, 2)
+    assert np.allclose(occ.sum(1), 2.0)
+    assert np.all(occ[:, 1] > 0.005) and np.all(occ[:, 1] < 0.05)

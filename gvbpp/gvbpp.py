@@ -135,7 +135,7 @@ class GVBPP:
         mo_coeff : ndarray or None
             Starting MO coefficients. If given, the active block is assumed
             to be correctly ordered already and no pairing guess is built.
-        guess : {'auto', 'localized', 'canonical'}
+        guess : {'auto', 'localized', 'canonical', 'exchange'}
             Pairing strategy for the initial active space.
 
             Orbital optimization under the perfect-pairing restriction is not
@@ -147,7 +147,10 @@ class GVBPP:
             reproducible.
 
             ``'auto'`` (the default) therefore multi-starts: it optimizes from
-            the localized guess, the canonical guess, and ``n_trials``
+            the localized guess, the canonical guess, the exchange guess
+            (correlating orbitals constructed in the full virtual space, the
+            only one of the three that finds the antibonding partner when the
+            lowest virtuals are diffuse), and ``n_trials``
             deterministically perturbed variants, and keeps the lowest energy.
             This makes the reported minimum robust rather than lucky.
 
@@ -155,7 +158,7 @@ class GVBPP:
             want to study the guess dependence itself.
         n_trials : int
             Number of extra seeded random-rotation starts used by ``'auto'``.
-            Set to 0 to try only the two systematic guesses (faster, less
+            Set to 0 to try only the three systematic guesses (faster, less
             robust).
         seed : int
             RNG seed for the perturbed starts. Fixed by default so that a
@@ -231,7 +234,7 @@ class GVBPP:
             trials = [('user', np.asarray(mo_coeff), {'method': 'user'})]
         elif guess == 'auto':
             trials = []
-            for m in ('localized', 'canonical'):
+            for m in ('localized', 'canonical', 'exchange'):
                 mo_m, info_m = pair_guess(self.mf, n, method=m)
                 trials.append((m, mo_m, info_m))
             # Seeded perturbations of the localized guess. A small orthogonal
